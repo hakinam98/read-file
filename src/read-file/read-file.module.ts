@@ -20,6 +20,10 @@ export class ReadFileModule implements OnApplicationBootstrap {
         const contents = fs.readFileSync(path, 'utf-8');
         this.saveDatabase(contents);
       }
+      if (event === 'add' && path.endsWith('.txt')) {
+        const contents = fs.readFileSync(path, 'utf-8');
+        this.saveDatabase(contents);
+      }
     });
   }
 
@@ -40,18 +44,21 @@ export class ReadFileModule implements OnApplicationBootstrap {
     const lines = contents.split('\n');
     for (let i = 1; i < lines.length; i++) {
       const columns = lines[i].split('\t');
-      const user: UserDto = {
-        id: parseInt(columns[0]),
-        name: columns[1],
-        email: columns[2],
-      };
-      const userDb = await this.prisma.user.findUnique({
-        where: { id: user.id },
-      });
-      if (!userDb) {
-        await this.prisma.user.create({
-          data: user,
+      if (columns[1] && columns[2]) {
+        const user: UserDto = {
+          name: columns[1],
+          email: columns[2],
+        };
+        const userDb = await this.prisma.user.findUnique({
+          where: {
+            email: user.email,
+          },
         });
+        if (!userDb) {
+          await this.prisma.user.create({
+            data: user,
+          });
+        }
       }
     }
   }
